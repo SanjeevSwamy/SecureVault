@@ -1,0 +1,48 @@
+name: secure_vault
+description: A decentralized encrypted file storage app.
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_riverpod: ^2.4.9
+  file_picker: ^10.3.2
+  shared_preferences: ^2.2.2
+  flutter_pdfview: ^1.3.2
+  open_filex: ^4.3.2
+  crypto: ^3.0.3
+  path_provider: ^2.1.1
+  cupertino_icons: ^1.0.2
+  google_fonts: ^6.1.0
+  flutter_secure_storage: ^9.0.0
+  intl: ^0.20.2
+  uuid: ^4.0.0
+  provider: ^6.0.5
+  http: ^1.6.0
+  url_launcher: ^6.2.1
+  # Use the latest stable version
+  reown_appkit: ^1.4.6+1
+  desktop_window: ^0.4.0 
+  window_manager: ^0.3.7 
+  encrypt: ^5.0.1
+  pointycastle: ^3.7.3  # For RSA
+  minio: ^3.5.7
+  share_plus: ^7.2.2
+  file_saver: ^0.2.13 
+  permission_handler: ^11.2.0
+  web3dart: ^2.7.3
+
+dev_dependencies:
+  msix: ^2.8.18  
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/logo.jpeg

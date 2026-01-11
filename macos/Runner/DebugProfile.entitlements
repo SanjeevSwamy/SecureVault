@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+        "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- App sandbox is still on -->
+	<key>com.apple.security.app-sandbox</key>
+	<true/>
+
+	<!-- Hot‑reload JIT in debug -->
+	<key>com.apple.security.cs.allow-jit</key>
+	<true/>
+
+	<!-- Allow incoming connections when you open a local dev socket -->
+	<key>com.apple.security.network.server</key>
+	<true/>
+
+	<!-- *** NEW ***  outbound HTTPS requests for Google Fonts, IPFS, etc. -->
+	<key>com.apple.security.network.client</key>
+	<true/>
+</dict>
+</plist>
