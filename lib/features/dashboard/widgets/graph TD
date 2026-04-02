@@ -1,0 +1,13 @@
+graph TD
+    A["App Start"] --> B["Connect Wallet"]
+    B --> C["Dashboard"]
+    
+    C --> D{Upload or<br/>Download?}
+    
+    D -->|Upload| E["Pick File"]
+    E --> F["Encrypt & Upload"]
+    F --> C
+    
+    D -->|Download| G["Enter CID"]
+    G --> H["Decrypt & Save"]
+    H --> C

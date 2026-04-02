@@ -10,6 +10,7 @@ import '../../upload/screens/upload_screen.dart';
 import '../../access/screens/access_file_screen.dart';
 import '../../keys/screens/key_management_screen.dart';
 import '../../settings/screens/settings_screen.dart';
+import '../../validation/screens/verify_file_screen.dart';       // 👈 add this
 import 'dart:ui';
 
 class DashboardScreen extends StatefulWidget {
@@ -26,6 +27,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   final List<Widget> _screens = [
     const DashboardContent(),
     const FileAccessScreen(),
+    const VerifyFileScreen(),                                  // 👈 added
     const KeyManagementScreen(),
     const SettingsScreen(),
   ];
@@ -36,16 +38,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
     _ensureWalletConnection();
   }
 
-  /// 🩹 Self-Healing: Wake up Wallet Engine & Verify Permissions
   Future<void> _ensureWalletConnection() async {
-    // If already running, verify permissions
     if (ReownSession.modal != null) {
       _verifyPermissions(ReownSession.modal!);
       return;
     }
 
     debugPrint('🔌 Dashboard: Waking up Wallet Engine...');
-    
+
     try {
       final modal = ReownAppKitModal(
         context: context,
@@ -56,21 +56,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
           url: 'https://securevault.app',
           icons: ['https://securevault.app/logo.png'],
           redirect: Redirect(
-            native: 'securevault://', 
-            universal: 'https://securevault.app'
+            native: 'securevault://',
+            universal: 'https://securevault.app',
           ),
         ),
-        // 🔒 STRICT CONFIG: Must match ConnectWalletScreen
         requiredNamespaces: {
           'eip155': const RequiredNamespace(
-            chains: ['eip155:11155111'], // Sepolia is Mandatory
+            chains: ['eip155:11155111'],
             methods: ['personal_sign', 'eth_sendTransaction', 'eth_signTransaction'],
             events: ['chainChanged', 'accountsChanged'],
           ),
         },
         optionalNamespaces: {
           'eip155': const RequiredNamespace(
-            chains: ['eip155:1'], // Mainnet is Optional
+            chains: ['eip155:1'],
             methods: ['personal_sign', 'eth_sendTransaction', 'eth_signTransaction'],
             events: ['chainChanged', 'accountsChanged'],
           ),
@@ -80,48 +79,37 @@ class _DashboardScreenState extends State<DashboardScreen> {
       await modal.init();
       ReownSession.modal = modal;
       debugPrint('✅ Dashboard: Wallet Engine restored!');
-      
-      // Check permissions after init
+
       if (modal.isConnected) {
         _verifyPermissions(modal);
       }
-      
     } catch (e) {
       debugPrint('❌ Dashboard: Wallet Error: $e');
     }
   }
 
-  // 👮‍♂️ THE BOUNCER CHECK
- // 👮‍♂️ THE BOUNCER CHECK (RELAXED VERSION)
   void _verifyPermissions(ReownAppKitModal modal) {
     final session = modal.session;
     if (session == null) return;
 
-    // Check if Sepolia is in the APPROVED namespaces (optional is fine)
-    final namespaces = session.toJson()['namespaces'];
-    final chains = namespaces?['eip155']?['chains'] as List?;
+    final namespaces    = session.toJson()['namespaces'];
+    final chains        = namespaces?['eip155']?['chains'] as List?;
     final approvedChains = chains?.map((e) => e.toString()).toList() ?? [];
-    
-    // We check if 11155111 is *available* to switch to, not necessarily active right now
+
     if (!approvedChains.contains('eip155:11155111')) {
       debugPrint('⚠️ Sepolia not authorized. Requesting switch...');
-      
-      // Attempt to switch instead of logout
-      modal.selectChain(
-        ReownAppKitModalNetworkInfo(
-          name: 'Sepolia',
-          chainId: '11155111',
-          currency: 'ETH',
-          rpcUrl: 'https://ethereum-sepolia-rpc.publicnode.com',
-          explorerUrl: 'https://sepolia.etherscan.io/',
-          isTestNetwork: true,
-        ),
-      );
+      modal.selectChain(ReownAppKitModalNetworkInfo(
+        name: 'Sepolia',
+        chainId: '11155111',
+        currency: 'ETH',
+        rpcUrl: 'https://ethereum-sepolia-rpc.publicnode.com',
+        explorerUrl: 'https://sepolia.etherscan.io/',
+        isTestNetwork: true,
+      ));
     } else {
       debugPrint('🛡️ Session verified: Sepolia access authorized.');
     }
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -135,53 +123,54 @@ class _DashboardScreenState extends State<DashboardScreen> {
         child: Container(
           height: 115,
           color: Colors.transparent,
-          child: Stack(
-            children: [
-              Positioned(
-                bottom: 20,
-                left: 12,
-                right: 12,
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  curve: Curves.easeOutQuart,
-                  height: 80,
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.surface.withOpacity(0.92),
-                    borderRadius: BorderRadius.circular(42.5),
-                    border: Border.all(
-                      color: const Color(0xFF2563EB).withOpacity(0.08),
-                      width: 1,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.06),
-                        blurRadius: 24,
-                        offset: const Offset(0, 8),
-                      ),
-                    ],
+          child: Stack(children: [
+            Positioned(
+              bottom: 20,
+              left: 12,
+              right: 12,
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                curve: Curves.easeOutQuart,
+                height: 80,
+                decoration: BoxDecoration(
+                  color: Theme.of(context)
+                      .colorScheme
+                      .surface
+                      .withOpacity(0.92),
+                  borderRadius: BorderRadius.circular(42.5),
+                  border: Border.all(
+                    color: const Color(0xFF2563EB).withOpacity(0.08),
                   ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(42.5),
-                    child: BackdropFilter(
-                      filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 24),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceAround,
-                          children: [
-                            _buildFloatingNavItem(0, Icons.apps_rounded, Icons.apps_outlined, 'Home'),
-                            _buildFloatingNavItem(1, Icons.download_rounded, Icons.download_outlined, 'Access'),
-                            _buildFloatingNavItem(2, Icons.key_rounded, Icons.key_outlined, 'Keys'),
-                            _buildFloatingNavItem(3, Icons.settings_rounded, Icons.settings_outlined, 'Settings'),
-                          ],
-                        ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.06),
+                      blurRadius: 24,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(42.5),
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          _navItem(0, Icons.apps_rounded,         Icons.apps_outlined,            'Home'),
+                          _navItem(1, Icons.download_rounded,     Icons.download_outlined,        'Access'),
+                          _navItem(2, Icons.verified_user_rounded,Icons.verified_user_outlined,   'Verify'),  // 👈 added
+                          _navItem(3, Icons.key_rounded,          Icons.key_outlined,             'Keys'),
+                          _navItem(4, Icons.settings_rounded,     Icons.settings_outlined,        'Settings'),
+                        ],
                       ),
                     ),
                   ),
                 ),
               ),
-            ],
-          ),
+            ),
+          ]),
         ),
       ),
       floatingActionButton: _selectedIndex == 0
@@ -203,17 +192,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       : () async {
                           setState(() => _isNavigating = true);
                           await Navigator.of(context).push(
-                            MaterialPageRoute(builder: (context) => const UploadScreen()),
+                            MaterialPageRoute(
+                                builder: (_) => const UploadScreen()),
                           );
-                          if (mounted) {
-                            setState(() => _isNavigating = false);
-                            // Refresh logic implicitly handled by child widgets
-                          }
+                          if (mounted) setState(() => _isNavigating = false);
                         },
                   backgroundColor: const Color(0xFF2563EB),
                   foregroundColor: Colors.white,
                   elevation: 0,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(18)),
                   child: const Icon(Icons.add_rounded, size: 28),
                 ),
               ),
@@ -222,7 +210,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildFloatingNavItem(int index, IconData selectedIcon, IconData unselectedIcon, String label) {
+  Widget _navItem(
+    int index,
+    IconData selectedIcon,
+    IconData unselectedIcon,
+    String label,
+  ) {
     final isSelected = _selectedIndex == index;
 
     return Expanded(
@@ -245,15 +238,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
           children: [
             Icon(
               isSelected ? selectedIcon : unselectedIcon,
-              size: 26,
-              color: isSelected ? const Color(0xFF2563EB) : Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+              size: 24,                                       // slightly smaller for 5 items
+              color: isSelected
+                  ? const Color(0xFF2563EB)
+                  : Theme.of(context)
+                      .colorScheme
+                      .onSurface
+                      .withOpacity(0.5),
             ),
             const SizedBox(height: 4),
             if (isSelected)
               Text(
                 label,
                 style: GoogleFonts.inter(
-                  fontSize: 11,
+                  fontSize: 10,                              // slightly smaller for 5 items
                   fontWeight: FontWeight.w600,
                   color: const Color(0xFF2563EB),
                 ),
@@ -265,6 +263,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+//  DASHBOARD CONTENT  (unchanged)
+// ─────────────────────────────────────────────────────────────────────────────
+
 class DashboardContent extends StatefulWidget {
   const DashboardContent({super.key});
 
@@ -272,7 +274,8 @@ class DashboardContent extends StatefulWidget {
   State<DashboardContent> createState() => _DashboardContentState();
 }
 
-class _DashboardContentState extends State<DashboardContent> with AutomaticKeepAliveClientMixin {
+class _DashboardContentState extends State<DashboardContent>
+    with AutomaticKeepAliveClientMixin {
   String _userName = 'User';
   bool _hasLoadedUserData = false;
   String _walletAddress = '';
@@ -280,37 +283,34 @@ class _DashboardContentState extends State<DashboardContent> with AutomaticKeepA
   @override
   void initState() {
     super.initState();
-    if (!_hasLoadedUserData) {
-      _loadUserData();
-    }
+    if (!_hasLoadedUserData) _loadUserData();
   }
 
   Future<void> _loadUserData() async {
     if (_hasLoadedUserData) return;
     try {
-      final data = await SessionWalletService.getSessionWalletData();
+      final data    = await SessionWalletService.getSessionWalletData();
       final address = data['address'] ?? '';
       final username = data['username'] ?? 'Homosapien';
-      
+
       if (mounted && address.isNotEmpty) {
         setState(() {
-          _userName = username;
-          _walletAddress = address;
-          _hasLoadedUserData = true;
+          _userName           = username;
+          _walletAddress      = address;
+          _hasLoadedUserData  = true;
         });
-        
         await FilebaseService.restoreFilesOnAppStart(address);
         if (mounted) setState(() {});
       } else if (mounted) {
         setState(() {
-          _userName = 'Homosapien';
+          _userName          = 'Homosapien';
           _hasLoadedUserData = true;
         });
       }
     } catch (e) {
       if (mounted) {
         setState(() {
-          _userName = 'Homosapien';
+          _userName          = 'Homosapien';
           _hasLoadedUserData = true;
         });
       }
@@ -323,15 +323,18 @@ class _DashboardContentState extends State<DashboardContent> with AutomaticKeepA
         FilebaseService.clearCache(_walletAddress);
         await Future.delayed(const Duration(milliseconds: 500));
         if (mounted) setState(() {});
-        
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: const Text('Dashboard refreshed'), backgroundColor: const Color(0xFF059669), behavior: SnackBarBehavior.floating),
-        );
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Dashboard refreshed'),
+          backgroundColor: Color(0xFF059669),
+          behavior: SnackBarBehavior.floating,
+        ));
       }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: const Text('Refresh failed'), backgroundColor: Colors.red, behavior: SnackBarBehavior.floating),
-      );
+    } catch (_) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('Refresh failed'),
+        backgroundColor: Colors.red,
+        behavior: SnackBarBehavior.floating,
+      ));
     }
   }
 
@@ -345,7 +348,8 @@ class _DashboardContentState extends State<DashboardContent> with AutomaticKeepA
       child: RefreshIndicator(
         onRefresh: _refreshDashboard,
         child: CustomScrollView(
-          physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+          physics: const BouncingScrollPhysics(
+              parent: AlwaysScrollableScrollPhysics()),
           slivers: [
             SliverToBoxAdapter(
               child: Padding(
@@ -354,8 +358,16 @@ class _DashboardContentState extends State<DashboardContent> with AutomaticKeepA
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const SizedBox(height: 20),
-                    Text('Welcome back,', style: GoogleFonts.inter(fontSize: 34, fontWeight: FontWeight.w700)),
-                    Text(_userName, style: GoogleFonts.inter(fontSize: 34, fontWeight: FontWeight.w300, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6))),
+                    Text('Welcome back,',
+                        style: GoogleFonts.inter(
+                            fontSize: 34,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white.withOpacity(0.95))),
+                    Text(_userName,
+                        style: GoogleFonts.inter(
+                            fontSize: 34,
+                            fontWeight: FontWeight.w300,
+                            color: Colors.white.withOpacity(0.75))),
                     const SizedBox(height: 40),
                   ],
                 ),
@@ -367,7 +379,9 @@ class _DashboardContentState extends State<DashboardContent> with AutomaticKeepA
                 delegate: SliverChildListDelegate([
                   const StorageSummaryCard(),
                   const SizedBox(height: 40),
-                  const Text('Recent Files', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w600)),
+                  const Text('Recent Files',
+                      style: TextStyle(
+                          fontSize: 24, fontWeight: FontWeight.w600)),
                   const SizedBox(height: 20),
                   const RecentUploadsCard(),
                   const SizedBox(height: 120),

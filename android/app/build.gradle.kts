@@ -21,7 +21,7 @@ android {
 
     defaultConfig {
         applicationId = "com.example.pivrate_storage"
-        minSdk = 23  // <--- Set this to 23!
+        minSdk = flutter.minSdkVersion  // <--- Set this to 23!
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
@@ -36,4 +36,16 @@ android {
 
 flutter {
     source = "../.."
+}
+
+configurations.all {
+    resolutionStrategy {
+        force("androidx.activity:activity:1.9.3")
+        force("androidx.activity:activity-ktx:1.9.3")
+        force("androidx.core:core:1.13.1")
+        force("androidx.core:core-ktx:1.13.1")
+        force("androidx.navigationevent:navigationevent-android:1.0.0-alpha01")
+        force("androidx.lifecycle:lifecycle-runtime-ktx:2.8.7")
+        force("androidx.lifecycle:lifecycle-viewmodel-ktx:2.8.7")
+    }
 }

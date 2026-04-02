@@ -6,10 +6,13 @@ list(APPEND FLUTTER_PLUGIN_LIST
   connectivity_plus
   desktop_window
   file_saver
+  file_selector_windows
   flutter_secure_storage_windows
+  msix
   permission_handler_windows
   screen_retriever
   share_plus
+  syncfusion_pdfviewer_windows
   url_launcher_windows
   window_manager
 )

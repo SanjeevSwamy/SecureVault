@@ -106,6 +106,8 @@ class FilebaseService {
     required String fileName,
     required String walletAddress,
     required EncryptionType encryptionType,
+      required String rawHash, // 🔥 ADD HERE
+
   }) async {
     String? uploadedObjectKey; // Track for rollback
 
@@ -162,15 +164,16 @@ class FilebaseService {
       debugPrint('🎉 Notarization Tx: $txHash');
       
       // 4. Save Metadata (Only if Tx succeeded)
-      await _saveFileMetadata(
-        objectKey, 
-        fileName, 
-        walletAddress, 
-        fileBytes.length, 
-        encryptionType,
-        integrityHash,
-        txHash
-      );
+     await _saveFileMetadata(
+  objectKey, 
+  fileName, 
+  walletAddress, 
+  fileBytes.length, 
+  encryptionType,
+  integrityHash,
+  txHash,
+  rawHash,
+);
 
       await syncMetadataToCloud(walletAddress);
       
@@ -419,26 +422,31 @@ class FilebaseService {
     int fileSize,
     EncryptionType encryptionType,
     String? integrityHash, 
-    String? txHash,        
+    String? txHash,   
+      String rawHash,
+
+    
+         
   ) async {
     try {
       final filesJson = await _storage.read(key: 'files_$walletAddress') ?? '[]';
       final existingFiles = List<Map<String, dynamic>>.from(json.decode(filesJson));
       
-      final newFile = {
-        'cid': cid,
-        'name': fileName,
-        'size': fileSize,
-        'encryptionType': encryptionType.name,
-        'encryptionName': encryptionType.displayName,
-        'encryptionEmoji': encryptionType.emoji,
-        'uploadedAt': DateTime.now().toIso8601String(),
-        'type': fileName.split('.').last.toLowerCase(),
-        'walletAddress': walletAddress,
-        'integrityHash': integrityHash,
-        'txHash': txHash,
-        'isVerified': txHash != null,
-      };
+    final newFile = {
+  'cid': cid,
+  'name': fileName,
+  'size': fileSize,
+  'encryptionType': encryptionType.name,
+  'encryptionName': encryptionType.displayName,
+  'encryptionEmoji': encryptionType.emoji,
+  'uploadedAt': DateTime.now().toIso8601String(),
+  'type': fileName.split('.').last.toLowerCase(),
+  'walletAddress': walletAddress,
+  'integrityHash': integrityHash,
+  'txHash': txHash,
+  'isVerified': txHash != null,
+  'rawHash': rawHash,
+};
       
       existingFiles.insert(0, newFile);
       if (existingFiles.length > 100) existingFiles.removeRange(100, existingFiles.length);

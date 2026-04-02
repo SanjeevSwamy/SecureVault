@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:secure_vault/features/dashboard/screens/dashboard_screen.dart';
-import 'dart:io';
+import 'package:secure_vault/core/route_observer.dart';              // 👈 added
 import '../features/splash/screens/splash_screen.dart';
-import '../features/dashboard/screens/macos_wallet_init_screen.dart'; // Add this import
+import '../features/dashboard/screens/macos_wallet_init_screen.dart';
 import '../providers/theme_provider.dart';
 import 'theme/app_theme.dart';
+
+import 'package:flutter/foundation.dart';
 
 class SecureVaultApp extends ConsumerWidget {
   const SecureVaultApp({super.key});
@@ -14,20 +16,25 @@ class SecureVaultApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final themeMode = ref.watch(themeProvider);
 
+    Widget getHomeScreen() {
+      if (kIsWeb) return const SplashScreen();
+      if (defaultTargetPlatform == TargetPlatform.macOS) {
+        return const MacOSWalletInitScreen();
+      }
+      return const SplashScreen();
+    }
+
     return MaterialApp(
       title: 'SecureVault',
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: themeMode,
-      // Platform-specific home screen
-      home: Platform.isMacOS 
-          ? const MacOSWalletInitScreen()  // macOS-specific initialization
-          : const SplashScreen(),          // Mobile splash screen
+      home: getHomeScreen(),
       debugShowCheckedModeBanner: false,
-      // Add routes for navigation
+      navigatorObservers: [appRouteObserver],                        // 👈 added
       routes: {
         '/splash': (context) => const SplashScreen(),
-        '/dashboard': (context) => const DashboardScreen(), // Your existing dashboard
+        '/dashboard': (context) => const DashboardScreen(),
       },
     );
   }
